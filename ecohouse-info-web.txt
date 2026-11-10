@@ -1,0 +1,170 @@
+=====================================================================
+ECO HOUSE (Puerto Rico) - INFORMACIÓN PARA NUEVA WEB
+Fuente: https://ecohousepr.com/ (extraído el 10 nov 2026)
+Nota para Claude Code: hacer una web NUEVA y diferente; usar solo este
+contenido. Logo y fotos los provee Dante aparte.
+=====================================================================
+
+---------------------------------------------------------------------
+1. DATOS DEL NEGOCIO
+---------------------------------------------------------------------
+Nombre: Eco House
+Slogan principal: "ECO HOUSE - MAKE YOUR HOUSE ECO-FRIENDLY"
+Slogan secundario: "Haz tu casa Eco-Friendly"
+Tagline del logo/hero: "Eco House - Solución Solar, Vida Mejor"
+Giro: Energía solar residencial y comercial + productos sostenibles
+Ubicación: Puerto Rico
+Idioma del sitio actual: Español
+Compañía eléctrica de referencia: LUMA (Puerto Rico)
+
+---------------------------------------------------------------------
+2. CONTACTO
+---------------------------------------------------------------------
+Teléfono: (939) 232-6136
+Email: info@ecohousepr.com
+Ubicación: Puerto Rico
+Dominio: ecohousepr.com
+Redes: el sitio muestra íconos de Instagram y Facebook en el header,
+pero NO tienen enlace configurado -> pedir los links al cliente.
+WhatsApp: no aparece -> confirmar con el cliente si usar (939) 232-6136.
+
+---------------------------------------------------------------------
+3. MENÚ / SECCIONES ACTUALES
+---------------------------------------------------------------------
+Home | Nosotros | Energía (Programas de Energía) | Tienda | Beneficios | Contacto
++ sección Cotización Gratis + Testimonios + Footer
+Botones/CTA: "Ver productos solares", "Programas de Energía",
+"Solicitar Cotización", "Solicitar Cotización Gratis", "Enviar Mensaje"
+
+---------------------------------------------------------------------
+4. HERO
+---------------------------------------------------------------------
+Etiqueta: Energía Solar Residencial
+Título: ECO HOUSE - MAKE YOUR HOUSE ECO-FRIENDLY
+Texto: Descubre soluciones de energía solar y productos sostenibles
+diseñados para reducir tu factura eléctrica y tu huella ambiental.
+
+---------------------------------------------------------------------
+5. SOBRE NOSOTROS
+---------------------------------------------------------------------
+Título: Energía solar para un futuro sostenible
+Texto: Eco House se especializa en soluciones de energía solar y
+productos sostenibles para tu hogar. Nuestro objetivo es ayudarte a
+reducir tu factura eléctrica mientras proteges el medio ambiente con
+energía limpia y renovable.
+
+---------------------------------------------------------------------
+6. SERVICIOS
+---------------------------------------------------------------------
+- Energía Solar: Instalación de sistemas solares residenciales y
+  comerciales de alta eficiencia.
+- Eficiencia Energética: Soluciones inteligentes para maximizar el
+  ahorro de tu factura eléctrica.
+- Sostenibilidad: Productos y servicios que cuidan el medio ambiente
+  para un futuro mejor.
+- Baterías de respaldo (backup durante apagones).
+- Sistemas Off-Grid.
+- Cisternas y calentadores solares de agua.
+- Cotización gratis a partir de la factura de luz.
+
+---------------------------------------------------------------------
+7. PROGRAMAS DE ENERGÍA - ¿Por qué escoger programas de energía?
+---------------------------------------------------------------------
+1. Ahorro en tu factura de LUMA - Reducir drásticamente el costo
+   mensual de electricidad con energía solar.
+2. Te mantienes siempre encendido - Con baterías de respaldo, tu hogar
+   nunca se queda sin energía.
+3. Menos perjudicial para la naturaleza - Energía limpia y renovable
+   que protege el medio ambiente.
+CTA: Solicitar Cotización
+
+---------------------------------------------------------------------
+8. TIENDA SOLAR - "Productos de Energía Solar"
+---------------------------------------------------------------------
+El sitio actual solo muestra 4 categorías con una imagen cada una
+(sin precios, sin descripciones, sin página de producto, botones no
+funcionan). Marcas/productos identificados en las imágenes:
+
+CATEGORÍA 1: BATERÍAS
+  - Producto: Gendome - estación de energía / batería portátil de
+    respaldo (gabinete gris con ruedas, pantalla y puertos frontales).
+    Imagen actual: product-gendome.jpg
+
+CATEGORÍA 2: SISTEMAS OFF-GRID
+  - Producto: Fortress Power eFlex - batería de litio (LiFePO4) para
+    sistemas solares / off-grid.
+    Imagen actual: product-fortress.jpg
+
+CATEGORÍA 3: OFERTAS
+  - Producto: Sunbeat - combo inversor solar + batería de pared
+    (inversor blanco con pantalla + batería Sunbeat).
+    Imagen actual: product-sunbeat.jpg
+
+CATEGORÍA 4: CISTERNAS Y CALENTADORES
+  - Producto: Calentador solar de agua (paneles colectores con tanque
+    termosifón en acero inoxidable) / cisternas.
+    Imagen actual: product-cisterna.jpg
+
+PENDIENTE DEL CLIENTE para la tienda: modelos exactos, capacidades
+(kWh / galones), precios, ofertas vigentes, fotos y si habrá
+carrito/pagos o solo "Solicitar cotización / WhatsApp" por producto.
+Sugerencia de estructura: tienda con filtros por categoría, tarjeta de
+producto (foto, nombre, specs, precio o "Cotizar"), administrable desde
+panel admin.
+
+---------------------------------------------------------------------
+9. BENEFICIOS - "Ventajas de la Energía Solar" (Por qué elegirnos)
+---------------------------------------------------------------------
+- Energía Renovable: Aprovecha tu energía solar ilimitada para tu hogar.
+- Ahorro Garantizado: Reduce hasta un 70% en tu factura de electricidad.
+- Siempre Encendido: Baterías de respaldo para que nunca te quedes sin luz.
+- Garantía Extendida: 25 años de garantía en paneles solares y equipos.
+
+---------------------------------------------------------------------
+10. TESTIMONIOS (del sitio actual - confirmar que son reales)
+---------------------------------------------------------------------
+- Maria G.: "Desde que instalé los paneles de Eco House, mi factura de
+  LUMA bajó un 75%. ¡Increíble inversión!"
+- Carlos R.: "La batería de respaldo me salvó durante el último apagón.
+  Mi familia nunca se quedó sin luz. 100% recomendado."
+- Ana L.: "El equipo de Eco House fue muy profesional. La instalación
+  fue rápida y el ahorro se nota desde el primer mes."
+
+---------------------------------------------------------------------
+11. FORMULARIOS
+---------------------------------------------------------------------
+A) Cotización Gratis
+   Texto: Sube tu factura de luz y recibe una cotización personalizada
+   para tu sistema solar. ¡Es rápido y fácil!
+   Campos: Nombre Completo, Correo Electrónico, Teléfono,
+   Subir factura de luz (PDF, JPG, PNG)
+   Botón: Solicitar Cotización Gratis
+
+B) Contacto - "¿Listo para cambiar a energía solar?"
+   Campos: Nombre, Correo Electrónico, Mensaje
+   Botón: Enviar Mensaje
+
+---------------------------------------------------------------------
+12. FOOTER / LEGAL
+---------------------------------------------------------------------
+Texto: Haz tu casa Eco-Friendly
+Enlaces rápidos: Home, Nosotros, Energía, Tienda
+Legal: Política de Servicios, Términos de Servicios (no tienen contenido
+en el sitio actual -> redactar o pedir al cliente)
+Contacto: (939) 232-6136
+Copyright: © 2026 Eco House. Todos los derechos reservados.
+(El sitio actual dice "Creado por Virtual Visionary Studio" - reemplazar
+por crédito de NEXIX Tech Studio.)
+El sitio actual tiene ruta /admin (panel admin).
+
+---------------------------------------------------------------------
+13. NOTAS TÉCNICAS DEL SITIO ACTUAL
+---------------------------------------------------------------------
+- Hecho en Lovable (React SPA de una sola página), title "Lovable App"
+  y meta description genérica -> la nueva web necesita SEO propio
+  (title, description, Open Graph, schema LocalBusiness Puerto Rico).
+- Imágenes actuales: hero-banner, about-bg, about-solar, store-bg,
+  testimonials-bg, contact-bg, logo (fondo oscuro), 4 fotos de producto.
+- Colores actuales: azul marino/azul profundo con acentos amarillo/dorado
+  y blanco. Tipografía bold itálica en títulos.
+=====================================================================
