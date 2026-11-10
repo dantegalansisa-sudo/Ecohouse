@@ -8,17 +8,6 @@ html[data-area='portal'] body {
   background: #f3f5fb;
   color: var(--ink);
 }
-html[data-area='admin'] *,
-html[data-area='portal'] * {
-  cursor: auto !important;
-}
-html[data-area='admin'] button,
-html[data-area='admin'] a,
-html[data-area='admin'] label,
-html[data-area='portal'] button,
-html[data-area='portal'] a {
-  cursor: pointer !important;
-}
 .adm-login {
   min-height: 100vh;
   display: grid;
@@ -498,8 +487,8 @@ html[data-area='portal'] a {
   background: #fff;
   box-shadow: 0 6px 16px -10px rgba(5, 12, 56, 0.3);
 }
-html[data-area='admin'] .kcard {
-  cursor: grab !important;
+.kcard {
+  cursor: grab;
 }
 .kcard.dragging {
   opacity: 0.4;
@@ -634,8 +623,8 @@ html[data-area='admin'] .kcard {
 .table tbody tr {
   transition: background 0.2s;
 }
-html[data-area='admin'] .table tbody tr {
-  cursor: pointer !important;
+.table tbody tr {
+  cursor: pointer;
 }
 .table tbody tr:hover {
   background: #f7f9fd;
@@ -924,8 +913,8 @@ html[data-area='admin'] .table tbody tr {
   border-radius: 14px;
   background: #f7f9fd;
 }
-html[data-area='admin'] .appts li {
-  cursor: pointer !important;
+.appts li {
+  cursor: pointer;
 }
 .appts li > div {
   flex: 1;

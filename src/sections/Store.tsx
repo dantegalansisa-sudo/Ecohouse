@@ -87,7 +87,7 @@ export default function Store() {
                   transition={{ duration: 0.5, delay: i * 0.04, ease: EASINGS.premium }}
                   whileHover={{ y: -8 }}
                 >
-                  <button className="pcard__media" onClick={() => setOpen(p)} data-cursor="Ver">
+                  <button className="pcard__media" onClick={() => setOpen(p)}>
                     <ProductImage p={p} />
                     {p.badge && <span className="pcard__badge">{p.badge}</span>}
                   </button>

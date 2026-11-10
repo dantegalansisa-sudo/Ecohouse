@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { AnimatePresence } from 'framer-motion';
 import Lenis from 'lenis';
-import CustomCursor from './components/CustomCursor';
 import Preloader from './components/Preloader';
 import { DesktopNav, MobileAppBar, TabBar } from './components/Navigation';
 import { HeroDesktop, HeroMobile } from './sections/Hero';
@@ -17,14 +16,13 @@ import Quote from './sections/Quote';
 import Testimonials from './sections/Testimonials';
 import Contact from './sections/Contact';
 import Footer from './sections/Footer';
-import { useIsMobile, useMediaQuery } from './hooks/useMediaQuery';
+import { useIsMobile } from './hooks/useMediaQuery';
 import { setLenis } from './utils/scroll';
 
 let booted = false; // el preloader solo corre la primera vez por visita
 
 export default function Site() {
   const mobile = useIsMobile();
-  const finePointer = useMediaQuery('(pointer: fine)');
   const [loading, setLoading] = useState(!booted);
   const [ready, setReady] = useState(booted);
 
@@ -57,7 +55,6 @@ export default function Site() {
 
   return (
     <>
-      {finePointer && !mobile && <CustomCursor />}
       <AnimatePresence onExitComplete={() => setReady(true)}>{loading && <Preloader onDone={done} />}</AnimatePresence>
 
       {mobile ? (

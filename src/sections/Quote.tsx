@@ -225,7 +225,6 @@ export default function Quote() {
                         }}
                         role="button"
                         tabIndex={0}
-                        data-cursor="Subir"
                       >
                         <motion.span className="drop__icon" animate={{ y: [0, -6, 0] }} transition={{ repeat: Infinity, duration: 2 }}>
                           <Upload size={26} />

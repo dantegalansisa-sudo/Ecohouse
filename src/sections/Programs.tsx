@@ -61,7 +61,7 @@ export default function Programs() {
               <Money value={bill} />
               <small>/mes</small>
             </div>
-            <input id="bill" type="range" min={60} max={800} step={5} value={bill} onChange={(e) => setBill(+e.target.value)} style={{ ['--pct' as string]: `${pct}%` }} data-cursor="Desliza" />
+            <input id="bill" type="range" min={60} max={800} step={5} value={bill} onChange={(e) => setBill(+e.target.value)} style={{ ['--pct' as string]: `${pct}%` }} />
             <div className="calc__scale">
               <span>$60</span>
               <span>$800+</span>

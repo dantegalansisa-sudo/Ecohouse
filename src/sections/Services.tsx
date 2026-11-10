@@ -55,7 +55,7 @@ const ITEMS = [
 function Card({ item, i, mobile }: { item: (typeof ITEMS)[number]; i: number; mobile: boolean }) {
   const Icon = item.icon;
   return (
-    <article className="sol-card" data-cursor="Ver">
+    <article className="sol-card">
       <div className="sol-card__img">
         <img src={mobile ? item.imgSm : item.img} alt={item.tag} loading="lazy" />
       </div>
