@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { AnimatePresence, motion } from 'framer-motion';
+import { motion } from 'framer-motion';
 import RevealText from '../components/RevealText';
 import { Check, Mail, MapPin, Phone, WhatsApp } from '../components/Icons';
 import { CONTACT, EASINGS } from '../utils/easings';
@@ -62,9 +62,8 @@ export default function Contact() {
         </div>
 
         <motion.form className="cform" onSubmit={send} initial={{ opacity: 0, y: 50 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.9, ease: EASINGS.premium }}>
-          <AnimatePresence mode="wait">
-            {sent ? (
-              <motion.div key="ok" className="cform__ok" initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }}>
+          {sent ? (
+              <div key="ok" className="cform__ok step-in">
                 <span className="done__check">
                   <Check size={30} />
                 </span>
@@ -80,9 +79,9 @@ export default function Contact() {
                 >
                   Enviar otro mensaje
                 </button>
-              </motion.div>
+              </div>
             ) : (
-              <motion.div key="form" className="fields" exit={{ opacity: 0 }}>
+              <div key="form" className="fields">
                 <Field label="Nombre" value={f.name} onChange={(v) => setF({ ...f, name: v })} autoComplete="name" />
                 <div className="fields__row">
                   <Field label="Correo electrónico" type="email" value={f.email} onChange={(v) => setF({ ...f, email: v })} autoComplete="email" />
@@ -101,9 +100,8 @@ export default function Contact() {
                 <button type="submit" className="btn btn--yellow" disabled={!valid}>
                   Enviar mensaje
                 </button>
-              </motion.div>
+              </div>
             )}
-          </AnimatePresence>
         </motion.form>
       </div>
     </section>

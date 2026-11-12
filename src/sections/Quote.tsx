@@ -214,7 +214,7 @@ export default function Quote() {
           </div>
         </div>
 
-        <motion.div className="wizard" initial={{ opacity: 0, y: 60 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, amount: 0.15 }} transition={{ duration: 1, ease: EASINGS.premium }}>
+        <motion.div className="wizard" initial={{ y: 60 }} whileInView={{ y: 0 }} viewport={{ once: true, amount: 0.15 }} transition={{ duration: 1, ease: EASINGS.premium }}>
           <div className="wizard__steps">
             {STEP_NAMES.map((n, i) => (
               <div key={n} className={`wizard__step ${i <= step ? 'on' : ''}`}>
@@ -228,8 +228,8 @@ export default function Quote() {
           </div>
 
           <div className="wizard__body">
-            <AnimatePresence mode="wait" custom={dir}>
-              <motion.div key={step} initial={{ opacity: 0, x: dir * 60 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: dir * -60 }} transition={{ duration: 0.4, ease: EASINGS.premium }}>
+            {/* cada paso se monta de inmediato con animación CSS: nunca queda bloqueado esperando una salida */}
+            <div key={step} className={dir < 0 ? 'step-in step-in--back' : 'step-in'}>
                 {step === 0 && (
                   <div className="wstep">
                     <h3>¿Para qué propiedad es?</h3>
@@ -291,7 +291,7 @@ export default function Quote() {
                         <small>PDF, JPG o PNG · máx. {MAX_MB} MB · también puedes tomarle una foto</small>
                       </div>
                     ) : (
-                      <motion.div className={`filecard ${aiState === 'reading' ? 'scan' : ''}`} initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}>
+                      <div className={`filecard pop-in ${aiState === 'reading' ? 'scan' : ''}`}>
                         {preview ? <img src={preview} alt="Vista previa de la factura" /> : <span className="filecard__pdf"><FileText size={28} /></span>}
                         <div>
                           <strong>{file.name}</strong>
@@ -308,7 +308,7 @@ export default function Quote() {
                         >
                           <X size={18} />
                         </button>
-                      </motion.div>
+                      </div>
                     )}
                     <input ref={inputRef} type="file" accept=".pdf,image/*" capture={undefined} hidden onChange={(e) => pick(e.target.files?.[0])} />
                     {fileErr && <p className="err">{fileErr}</p>}
@@ -322,7 +322,7 @@ export default function Quote() {
                         )}
                       </p>
                     )}
-                    <AnimatePresence>{ai && <AiBill ai={ai} />}</AnimatePresence>
+                    {ai && <AiBill ai={ai} />}
 
                     <div className="fields__row bill-row">
                       <Field label="Total de tu factura ($/mes)" type="number" value={bill} onChange={setBill} />
@@ -347,7 +347,7 @@ export default function Quote() {
 
                     <AnimatePresence>
                       {est && (
-                        <motion.div className="estcard" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
+                        <div className="estcard pop-in">
                           <span>Estimado preliminar</span>
                           <div className="estcard__grid">
                             <div>
@@ -363,7 +363,7 @@ export default function Quote() {
                               <small>ahorro/año</small>
                             </div>
                           </div>
-                        </motion.div>
+                        </div>
                       )}
                     </AnimatePresence>
                   </div>
@@ -410,11 +410,11 @@ export default function Quote() {
 
                 {step === 4 && lead && (
                   <div className="wstep wstep--done">
-                    <motion.div className="done__check" initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ ease: EASINGS.bounce, duration: 0.7 }}>
+                    <div className="done__check pop-in">
                       <svg viewBox="0 0 52 52">
-                        <motion.path d="M14 27 l8 8 l16 -18" initial={{ pathLength: 0 }} animate={{ pathLength: 1 }} transition={{ delay: 0.35, duration: 0.6 }} />
+                        <path d="M14 27 l8 8 l16 -18" />
                       </svg>
-                    </motion.div>
+                    </div>
                     <h3>¡Recibimos tu solicitud, {lead.name.split(' ')[0]}!</h3>
                     <div className="code">
                       <small>Tu código de proyecto</small>
@@ -448,8 +448,7 @@ export default function Quote() {
                     </div>
                   </div>
                 )}
-              </motion.div>
-            </AnimatePresence>
+            </div>
           </div>
 
           <div className="wizard__foot">
@@ -524,7 +523,7 @@ export function Field({
 function AiBill({ ai }: { ai: BillAI }) {
   const max = Math.max(1, ...ai.historial.map((h) => h.kwh));
   return (
-    <motion.div className="aibill" initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
+    <div className="aibill pop-in">
       <div className="aibill__head">
         <Sun size={16} /> Factura leída por IA
         <em>Confianza {ai.confianza}</em>
@@ -556,6 +555,6 @@ function AiBill({ ai }: { ai: BillAI }) {
       <p>
         {ai.nota} {ai.historial.length > 1 && 'Usamos tu promedio anual para dimensionar el sistema, no un solo mes.'}
       </p>
-    </motion.div>
+    </div>
   );
 }

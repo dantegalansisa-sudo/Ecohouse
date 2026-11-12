@@ -1,5 +1,4 @@
 import { useMemo, useState } from 'react';
-import { motion } from 'framer-motion';
 import { Calendar as CalIcon, ChevronLeft, ChevronRight, Clock } from './Icons';
 import { crm } from '../lib/crm';
 import { SLOTS_SAT as SAT, SLOTS_WEEK as WEEK } from '../../api/_lib/solar.js';
@@ -85,9 +84,9 @@ export default function Calendar({ date, time, onDate, onTime }: { date: string;
         {date ? (
           <div className="slots__grid">
             {slots.map((t, i) => (
-              <motion.button key={t} type="button" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.04 }} disabled={taken(t)} className={`slot ${time === t ? 'on' : ''}`} onClick={() => onTime(t)}>
+              <button key={t} type="button" style={{ animationDelay: `${i * 40}ms` }} disabled={taken(t)} className={`slot pop-in ${time === t ? 'on' : ''}`} onClick={() => onTime(t)}>
                 {taken(t) ? 'Ocupado' : t}
-              </motion.button>
+              </button>
             ))}
           </div>
         ) : (

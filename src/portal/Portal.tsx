@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { AnimatePresence, motion } from 'framer-motion';
+import { motion } from 'framer-motion';
 import Logo from '../components/Logo';
 import { crm, findLead, type Lead } from '../lib/crm';
 import { money } from '../lib/estimate';
@@ -68,9 +68,8 @@ export default function Portal() {
         )}
       </header>
 
-      <AnimatePresence mode="wait">
-        {!lead ? (
-          <motion.form key="login" className="portal__login" onSubmit={enter} initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} transition={{ ease: EASINGS.premium, duration: 0.6 }}>
+      {!lead ? (
+          <form key="login" className="portal__login step-in" onSubmit={enter}>
             <span className="portal__sun">
               <Sun size={30} />
             </span>
@@ -91,11 +90,10 @@ export default function Portal() {
               {searching ? 'Buscando…' : 'Ver mi proyecto'} <ArrowUpRight size={18} />
             </button>
             <small className="portal__hint">Demo: prueba con <b>EH-1035</b> y <b>787-555-0114</b>, o con el código que generes en la cotización del sitio.</small>
-          </motion.form>
+          </form>
         ) : (
           <ProjectView key="view" lead={lead} />
         )}
-      </AnimatePresence>
     </div>
   );
 }

@@ -1671,3 +1671,38 @@
 .hero__lead {
   text-shadow: 0 2px 20px rgba(4, 9, 42, 0.8);
 }
+
+/* entrada de pasos (cotización, contacto, portal): CSS puro, el contenido nunca queda invisible */
+.step-in {
+  animation: stepIn 0.5s var(--ease);
+}
+.step-in--back {
+  animation-name: stepInBack;
+}
+/* solo movimiento, sin opacidad: si la animación no corre, el paso igual se ve */
+@keyframes stepIn {
+  from {
+    transform: translateX(28px);
+  }
+  to {
+    transform: none;
+  }
+}
+@keyframes stepInBack {
+  from {
+    transform: translateX(-28px);
+  }
+  to {
+    transform: none;
+  }
+}
+
+/* aparición suave sin opacidad (siempre visible aunque la animación no corra) */
+.pop-in {
+  animation: popIn 0.45s var(--ease) backwards;
+}
+@keyframes popIn {
+  from {
+    transform: translateY(8px) scale(0.97);
+  }
+}
