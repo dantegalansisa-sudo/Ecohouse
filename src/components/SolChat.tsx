@@ -1,13 +1,13 @@
 import { useEffect, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { askSol, type ChatCard, type ChatTurn } from '../lib/ai';
+import { askSol, readBill, uploadBill, type BillContext, type ChatCard, type ChatTurn } from '../lib/ai';
 import { addLead, crm } from '../lib/crm';
 import { money } from '../lib/estimate';
 import { productStore } from '../lib/products';
 import { quoteList, toggleQuote } from '../lib/quoteList';
 import { labelOf } from './Calendar';
 import { ProductImage } from '../sections/Store';
-import { ArrowUpRight, Check, Plus, Sun, WhatsApp, X } from './Icons';
+import { ArrowUpRight, Camera, Check, FileText, Plus, Sun, WhatsApp, X } from './Icons';
 import { EASINGS } from '../utils/easings';
 import { scrollToId } from '../utils/scroll';
 
@@ -16,12 +16,13 @@ const WELCOME: ChatTurn = {
   role: 'assistant',
   content: '¡Hola! Soy **Sol**, el asistente de Eco House ☀️\nTe ayudo a calcular cuánto puedes ahorrar, qué batería necesitas para los apagones y a pedir tu cotización gratis. ¿Por dónde empezamos?',
 };
-const CHIPS = ['¿Cuánto puedo ahorrar?', '¿Qué batería necesito para los apagones?', '¿Cómo funciona la instalación?', 'Quiero mi cotización gratis'];
+const CHIPS = ['📷 Enviar foto de mi factura', '¿Cuánto puedo ahorrar?', '¿Qué batería necesito para los apagones?', '¿Cómo funciona la instalación?', 'Quiero mi cotización gratis'];
 
 interface Saved {
   turns: ChatTurn[];
   session: string;
   leadCode?: string;
+  bill?: BillContext;
 }
 
 function load(): Saved {
@@ -69,6 +70,7 @@ export default function SolChat({ ready }: { ready: boolean }) {
   const [teaser, setTeaser] = useState(false);
   const bodyRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+  const fileRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     try {
@@ -99,16 +101,18 @@ export default function SolChat({ ready }: { ready: boolean }) {
     return () => window.removeEventListener('sol:open', on);
   });
 
-  const send = async (text: string) => {
+  const send = async (text: string, extra?: { cards?: ChatCard[]; bill?: BillContext }) => {
     const msg = text.trim();
-    if (!msg || busy) return;
+    if (!msg || (busy && !extra)) return;
+    if (msg.startsWith('📷')) return fileRef.current?.click();
     setErr('');
     setInput('');
-    const turns: ChatTurn[] = [...saved.turns, { role: 'user', content: msg }];
-    setSaved((s) => ({ ...s, turns }));
+    const turns: ChatTurn[] = [...saved.turns, { role: 'user', content: msg, cards: extra?.cards }];
+    const bill = extra?.bill ?? saved.bill;
+    setSaved((s) => ({ ...s, turns, bill }));
     setBusy(true);
     try {
-      const r = await askSol([WELCOME, ...turns], saved.session, saved.leadCode);
+      const r = await askSol([WELCOME, ...turns], saved.session, saved.leadCode, bill);
       r.cards.forEach((c) => {
         // reflejo local para que la cotización aparezca también en "Mi proyecto" de este navegador
         if (c.type === 'lead' && !crm.get().some((l) => l.code === c.code))
@@ -121,6 +125,40 @@ export default function SolChat({ ready }: { ready: boolean }) {
     } finally {
       setBusy(false);
       inputRef.current?.focus();
+    }
+  };
+
+  // El cliente le envía la foto o el PDF de su factura a Sol
+  const sendBill = async (file?: File | null) => {
+    if (!file || busy) return;
+    if (file.size > 10 * 1024 * 1024) return setErr('El archivo supera 10 MB.');
+    setErr('');
+    setBusy(true);
+    try {
+      const [ai, path] = await Promise.all([readBill(file), uploadBill(file).catch(() => undefined)]);
+      if (!ai.es_factura) {
+        setSaved((s) => ({
+          ...s,
+          turns: [...s.turns, { role: 'user', content: `Te envié ${file.name}` }, { role: 'assistant', content: 'Mmm, eso no parece una factura de luz 🤔 ¿Puedes enviarme una foto clara de tu factura de LUMA? También puedes escribirme cuánto pagas al mes.' }],
+        }));
+        setBusy(false);
+        return;
+      }
+      const bill: BillContext = {
+        total: ai.total_a_pagar,
+        kwh: ai.consumo_kwh,
+        promedio: ai.promedio_kwh,
+        meses: ai.historial.length,
+        periodo: ai.periodo,
+        confianza: ai.confianza,
+        path,
+        ai,
+      };
+      const card: ChatCard = { type: 'bill', name: file.name, total: ai.total_a_pagar, kwh: ai.consumo_kwh, promedio: ai.promedio_kwh, historial: ai.historial, confianza: ai.confianza };
+      await send('Te envié mi factura de luz. ¿Cuánto puedo ahorrar?', { cards: [card], bill });
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : 'No pude leer la factura. Intenta con una foto más clara.');
+      setBusy(false);
     }
   };
 
@@ -247,6 +285,19 @@ export default function SolChat({ ready }: { ready: boolean }) {
                 send(input);
               }}
             >
+              <button type="button" className="sol__attach" onClick={() => fileRef.current?.click()} disabled={busy} aria-label="Enviar foto o PDF de tu factura" title="Enviar mi factura">
+                <Camera size={20} />
+              </button>
+              <input
+                ref={fileRef}
+                type="file"
+                accept="image/*,application/pdf"
+                hidden
+                onChange={(e) => {
+                  sendBill(e.target.files?.[0]);
+                  e.target.value = '';
+                }}
+              />
               <textarea
                 ref={inputRef}
                 rows={1}
@@ -397,6 +448,36 @@ function Card({ card, onSend, onGo }: { card: ChatCard; onSend: (t: string) => v
           <small>Código {card.code}</small>
         </div>
       );
+    case 'bill': {
+      const max = Math.max(1, ...card.historial.map((h) => h.kwh));
+      return (
+        <div className="scard scard--bill">
+          <span className="scard__k">
+            <FileText size={13} /> Factura leída por IA · confianza {card.confianza}
+          </span>
+          <div className="scard__grid">
+            <div>
+              <b>{card.total != null ? `$${card.total}` : '—'}</b>
+              <small>total del mes</small>
+            </div>
+            <div>
+              <b>{card.promedio ?? card.kwh ?? '—'} kWh</b>
+              <small>{card.historial.length > 1 ? `promedio ${card.historial.length} meses` : 'consumo del mes'}</small>
+            </div>
+          </div>
+          {card.historial.length > 1 && (
+            <div className="aibill__chart">
+              {card.historial.map((h, i) => (
+                <div key={i} title={`${h.mes}: ${h.kwh} kWh`}>
+                  <span style={{ height: `${(h.kwh / max) * 100}%` }} />
+                  <small>{h.mes.slice(0, 1)}</small>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      );
+    }
     case 'human':
       return (
         <a className="scard scard--wa" href={card.url} target="_blank" rel="noreferrer">

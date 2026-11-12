@@ -44,7 +44,20 @@ export type ChatCard =
   | { type: 'lead'; code: string; name: string; phone: string; email: string; town: string; property: 'Residencial' | 'Comercial'; bill?: number; estimate?: Estimate }
   | { type: 'slots'; date: string; slots: string[]; code?: string }
   | { type: 'visit'; code: string; date: string; time: string }
-  | { type: 'human'; url: string };
+  | { type: 'human'; url: string }
+  | { type: 'bill'; name: string; total: number | null; kwh: number | null; promedio: number | null; historial: { mes: string; kwh: number }[]; confianza: string };
+
+// Lo que Sol sabe de la factura que el cliente le envió en el chat
+export interface BillContext {
+  total: number | null;
+  kwh: number | null;
+  promedio: number | null;
+  meses: number;
+  periodo: string | null;
+  confianza: string;
+  path?: string;
+  ai?: BillAI;
+}
 
 export interface ChatTurn {
   role: 'user' | 'assistant';
@@ -52,10 +65,11 @@ export interface ChatTurn {
   cards?: ChatCard[];
 }
 
-export const askSol = (messages: ChatTurn[], session: string, leadCode?: string) =>
+export const askSol = (messages: ChatTurn[], session: string, leadCode?: string, bill?: BillContext) =>
   post<{ reply: string; cards: ChatCard[]; leadCode: string | null }>('/api/chat', {
     session,
     leadCode,
+    bill,
     messages: messages.map(({ role, content }) => ({ role, content })),
   });
 

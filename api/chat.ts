@@ -10,7 +10,36 @@ const WHATSAPP = '19392326136';
 
 type Msg = { role: 'user' | 'assistant'; content: string };
 type Card = Record<string, unknown> & { type: string };
-type Ctx = { leadCode?: string; lastUser: string };
+type Ctx = { leadCode?: string; lastUser: string; bill?: BillCtx };
+
+// Datos de la factura que el cliente le envió a Sol (leída por /api/bill)
+interface BillCtx {
+  total: number | null;
+  kwh: number | null;
+  promedio: number | null;
+  meses: number;
+  periodo: string | null;
+  confianza: string;
+  path?: string;
+  ai?: unknown;
+}
+
+function cleanBill(raw: unknown): BillCtx | undefined {
+  if (!raw || typeof raw !== 'object') return undefined;
+  const b = raw as Record<string, unknown>;
+  const num = (v: unknown) => (typeof v === 'number' && v > 0 && v < 1e6 ? v : null);
+  const out: BillCtx = {
+    total: num(b.total),
+    kwh: num(b.kwh),
+    promedio: num(b.promedio),
+    meses: Math.min(13, Math.max(0, Number(b.meses) || 0)),
+    periodo: typeof b.periodo === 'string' ? b.periodo.slice(0, 60) : null,
+    confianza: ['alta', 'media', 'baja'].includes(String(b.confianza)) ? String(b.confianza) : 'media',
+    path: typeof b.path === 'string' && /^[\w./-]{5,120}$/.test(b.path) ? b.path : undefined,
+    ai: b.ai && JSON.stringify(b.ai).length < 6000 ? b.ai : undefined,
+  };
+  return out.total || out.kwh ? out : undefined;
+}
 
 const CONFIRM = /^\s*(s[ií]|si+|claro|correcto|dale|ok|okay|perfecto|confirm|adelante|exacto|as[ií] mismo|est[aá] bien|yes|sure|reg[ií]str)/i;
 
@@ -212,8 +241,9 @@ async function runTool(name: string, args: Record<string, any>, cards: Card[], c
       // regla dura: solo se registra si el último mensaje del usuario confirma el resumen
       if (!CONFIRM.test(ctx.lastUser))
         return { ok: false, error: 'Aún no confirmado. Muestra el resumen de los datos y pregunta "¿Lo registro así?". Registra solo cuando el usuario responda que sí.' };
-      const bill = Number(args.factura_mensual) || undefined;
-      const est = bill ? estimate(bill) : undefined;
+      const bill = Number(args.factura_mensual) || ctx.bill?.total || undefined;
+      const kwh = ctx.bill?.promedio ?? ctx.bill?.kwh ?? undefined;
+      const est = bill ? estimate(bill, kwh) : undefined;
       try {
         const r = await rpc<{ code: string }>('create_lead', {
           p: {
@@ -225,6 +255,9 @@ async function runTool(name: string, args: Record<string, any>, cards: Card[], c
             address: args.direccion,
             property: args.tipo_propiedad,
             bill,
+            kwh,
+            bill_ai: ctx.bill?.ai,
+            bill_path: ctx.bill?.path,
             interests: (args.intereses ?? []).filter((id: string) => DEFAULT_PRODUCTS.some((p) => p.id === id)),
             message: args.resumen,
             estimate: est,
@@ -268,18 +301,19 @@ async function runTool(name: string, args: Record<string, any>, cards: Card[], c
 export default async function handler(req: Req, res: Res) {
   if (!guard(req, res)) return;
   try {
-    const body = (typeof req.body === 'string' ? JSON.parse(req.body) : req.body) as { messages?: Msg[]; session?: string; leadCode?: string };
+    const body = (typeof req.body === 'string' ? JSON.parse(req.body) : req.body) as { messages?: Msg[]; session?: string; leadCode?: string; bill?: unknown };
     const history = (body.messages ?? []).filter((m) => (m.role === 'user' || m.role === 'assistant') && typeof m.content === 'string');
     if (!history.length || history[history.length - 1].role !== 'user') throw new HttpError(400, 'Mensaje vacío');
     if (history.length > MAX_MESSAGES) throw new HttpError(429, 'Esta conversación llegó a su límite. Para seguir, escríbenos por WhatsApp al (939) 232-6136.');
     const session = String(body.session ?? 'anon').slice(0, 64);
     const ctx: Ctx = {
       leadCode: body.leadCode && /^EH-\d+$/.test(body.leadCode) ? body.leadCode : undefined,
+      bill: cleanBill(body.bill),
       lastUser: history[history.length - 1].content.slice(0, MAX_CHARS),
     };
 
     const messages: any[] = [
-      { role: 'system', content: systemPrompt() + (ctx.leadCode ? `\n\nEste visitante ya está registrado con el código ${ctx.leadCode}.` : '') },
+      { role: 'system', content: systemPrompt() + (ctx.leadCode ? `\n\nEste visitante ya está registrado con el código ${ctx.leadCode}.` : '') + billNote(ctx.bill) },
       ...history.slice(-20).map((m) => ({ role: m.role, content: m.content.slice(0, MAX_CHARS) })),
     ];
     const cards: Card[] = [];
@@ -321,4 +355,14 @@ export default async function handler(req: Req, res: Res) {
   } catch (e) {
     fail(res, e);
   }
+}
+
+function billNote(b?: BillCtx) {
+  if (!b) return '';
+  return `\n\n# Factura que el cliente te envió (leída por IA, confianza ${b.confianza})
+- Total del mes: ${b.total != null ? '$' + b.total : 'no se leyó'}
+- Consumo del mes: ${b.kwh != null ? b.kwh + ' kWh' : 'no se leyó'}
+- Promedio mensual: ${b.promedio != null ? `${b.promedio} kWh (${b.meses} meses de historial)` : 'sin historial'}
+- Periodo: ${b.periodo ?? 'no se leyó'}
+Usa estos datos: para el ahorro llama calcular_ahorro con factura_mensual = total y kwh_mes = promedio (o el consumo del mes). Al registrar al cliente la factura se adjunta sola; no le pidas el monto de nuevo. Si la confianza es baja o falta el total, pídele que confirme el monto.`;
 }

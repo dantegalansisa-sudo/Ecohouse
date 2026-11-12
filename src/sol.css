@@ -644,3 +644,29 @@
     font-size: 16px;
   }
 }
+
+/* enviar factura desde el chat */
+.sol__input .sol__attach {
+  background: #eef1fa;
+  color: var(--teal);
+}
+.sol__input .sol__attach:hover:not(:disabled) {
+  background: #fff3b0;
+}
+.scard--bill {
+  background: radial-gradient(circle at 100% 0%, #12309a, var(--teal-d) 70%);
+  color: #fff;
+  border: 0;
+}
+.scard--bill .scard__k {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--yellow);
+}
+.scard--bill .aibill__chart {
+  height: 54px;
+}
+.sol-msg--user .scard {
+  align-self: flex-end;
+}

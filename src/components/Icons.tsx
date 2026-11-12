@@ -130,3 +130,6 @@ export const Minus = ({ size }: P) => (
 export const Globe = ({ size }: P) => (
   <svg {...base(size)}><circle cx="12" cy="12" r="9" /><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18" /></svg>
 );
+export const Camera = ({ size }: P) => (
+  <svg {...base(size)}><path d="M4 8h3l2-3h6l2 3h3v11H4z" /><circle cx="12" cy="13" r="3.5" /></svg>
+);
