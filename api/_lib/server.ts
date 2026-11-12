@@ -31,10 +31,7 @@ export async function rpc<T>(fn: string, args: Record<string, unknown>): Promise
 }
 
 export async function openai(body: Record<string, unknown>) {
-  // acepta el nombre estándar o cualquier variable "openai" de Vercel cuyo valor sea una clave
-  const key =
-    process.env.OPENAI_API_KEY ||
-    Object.entries(process.env).find(([k, v]) => /open\s*_?ai/i.test(k) && v?.trim().startsWith('sk-'))?.[1]?.trim();
+  const key = findOpenAIKey();
   if (!key) throw new HttpError(503, 'La IA aún no está configurada (falta OPENAI_API_KEY en Vercel).');
   const r = await fetch('https://api.openai.com/v1/chat/completions', {
     method: 'POST',
@@ -47,6 +44,17 @@ export async function openai(body: Record<string, unknown>) {
     throw new HttpError(502, 'El asistente no está disponible en este momento.');
   }
   return data;
+}
+
+// Acepta OPENAI_API_KEY o cualquier variable de Vercel cuyo valor tenga formato de clave de OpenAI ("sk-…")
+export function openAIKeyVars() {
+  return Object.keys(process.env).filter((k) => process.env[k]?.trim().startsWith('sk-'));
+}
+function findOpenAIKey() {
+  if (process.env.OPENAI_API_KEY) return process.env.OPENAI_API_KEY.trim();
+  const vars = openAIKeyVars();
+  const name = vars.find((k) => /open\s*_?ai/i.test(k)) ?? vars[0];
+  return name ? process.env[name]!.trim() : undefined;
 }
 
 export class HttpError extends Error {
