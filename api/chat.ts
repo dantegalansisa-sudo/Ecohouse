@@ -169,6 +169,18 @@ function validDate(fecha: string) {
   if (new Date(fecha + 'T12:00:00Z').getUTCDay() === 0) return 'Los domingos no hay visitas.';
   return null;
 }
+// "09:30", "9:30am", "9:30 a.m.", "13:00" → "9:30 AM" / "1:00 PM" (formato de los horarios)
+function normalizeTime(t: string) {
+  const m = /(\d{1,2})(?::(\d{2}))?\s*(a\.?\s*m\.?|p\.?\s*m\.?)?/i.exec(t);
+  if (!m) return null;
+  let h = +m[1];
+  const min = m[2] ?? '00';
+  const mer = m[3]?.toLowerCase().startsWith('p') ? 'PM' : m[3] ? 'AM' : h >= 12 || h <= 6 ? 'PM' : 'AM';
+  if (h > 12) h -= 12;
+  if (h === 0) h = 12;
+  return `${h}:${min} ${mer}`;
+}
+
 const slotsFor = (fecha: string) => (new Date(fecha + 'T12:00:00Z').getUTCDay() === 6 ? SLOTS_SAT : SLOTS_WEEK);
 
 async function runTool(name: string, args: Record<string, any>, cards: Card[], ctx: Ctx) {
@@ -236,9 +248,11 @@ async function runTool(name: string, args: Record<string, any>, cards: Card[], c
     case 'agendar_visita': {
       const err = validDate(String(args.fecha));
       if (err) return { error: err };
-      if (!slotsFor(args.fecha).includes(args.hora)) return { error: `Hora inválida. Opciones: ${slotsFor(args.fecha).join(', ')}` };
-      const r = await rpc<{ ok: boolean; error?: string }>('book_visit', { p_code: args.codigo, p_date: args.fecha, p_time: args.hora });
-      if (r.ok) cards.push({ type: 'visit', code: String(args.codigo).toUpperCase(), date: args.fecha, time: args.hora });
+      const hora = normalizeTime(String(args.hora));
+      if (!hora || !slotsFor(args.fecha).includes(hora)) return { error: `Hora inválida. Opciones: ${slotsFor(args.fecha).join(', ')}` };
+      const code = String(args.codigo || ctx.leadCode || '').toUpperCase();
+      const r = await rpc<{ ok: boolean; error?: string }>('book_visit', { p_code: code, p_date: args.fecha, p_time: hora });
+      if (r.ok) cards.push({ type: 'visit', code, date: args.fecha, time: hora });
       return r;
     }
     case 'contactar_humano': {
