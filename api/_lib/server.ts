@@ -31,8 +31,10 @@ export async function rpc<T>(fn: string, args: Record<string, unknown>): Promise
 }
 
 export async function openai(body: Record<string, unknown>) {
-  // acepta el nombre estándar o el que se configuró en Vercel ("OpenAI")
-  const key = process.env.OPENAI_API_KEY || process.env.OpenAI || process.env.OPENAI;
+  // acepta el nombre estándar o cualquier variable "openai" de Vercel cuyo valor sea una clave
+  const key =
+    process.env.OPENAI_API_KEY ||
+    Object.entries(process.env).find(([k, v]) => /open\s*_?ai/i.test(k) && v?.trim().startsWith('sk-'))?.[1]?.trim();
   if (!key) throw new HttpError(503, 'La IA aún no está configurada (falta OPENAI_API_KEY en Vercel).');
   const r = await fetch('https://api.openai.com/v1/chat/completions', {
     method: 'POST',
