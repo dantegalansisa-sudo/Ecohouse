@@ -272,7 +272,7 @@ export default async function handler(req: Req, res: Res) {
     let reply = '';
 
     // si el cliente ya está registrado y escogió una hora, la reserva se hace sí o sí con la herramienta
-    const picksTime = !!ctx.leadCode && /\d{1,2}(:\d{2})?\s*(a\.?\s?m|p\.?\s?m)\.?/i.test(ctx.lastUser);
+    const picksTime = !!ctx.leadCode && /\b\d{1,2}(:\d{2})?\s*(a\.?\s?m|p\.?\s?m)\.?/i.test(ctx.lastUser);
     for (let i = 0; i < 5; i++) {
       const force = i === 0 && picksTime ? { tool_choice: { type: 'function', function: { name: 'agendar_visita' } } } : {};
       const data = await openai({ messages, tools: TOOLS, max_completion_tokens: 700, ...force });
