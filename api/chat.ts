@@ -10,6 +10,9 @@ const WHATSAPP = '19392326136';
 
 type Msg = { role: 'user' | 'assistant'; content: string };
 type Card = Record<string, unknown> & { type: string };
+type Ctx = { leadCode?: string; lastUser: string };
+
+const CONFIRM = /^\s*(s[ií]|si+|claro|correcto|dale|ok|okay|perfecto|confirm|adelante|exacto|as[ií] mismo|est[aá] bien|yes|sure|reg[ií]str)/i;
 
 const CATALOG = DEFAULT_PRODUCTS.filter((p) => p.visible)
   .map((p) => `- ${p.id} | ${p.name} (${p.brand}, categoría ${p.category}): ${p.tagline} Specs: ${p.specs.join('; ')}.`)
@@ -108,7 +111,7 @@ const TOOLS = [
     type: 'function',
     function: {
       name: 'registrar_cliente',
-      description: 'Registra la solicitud de cotización gratis. Usar solo con datos confirmados por el usuario.',
+      description: 'Registra la solicitud de cotización gratis. Llamar SOLO después de mostrar el resumen de datos y que el usuario responda que sí.',
       parameters: {
         type: 'object',
         properties: {
@@ -167,7 +170,7 @@ function validDate(fecha: string) {
 }
 const slotsFor = (fecha: string) => (new Date(fecha + 'T12:00:00Z').getUTCDay() === 6 ? SLOTS_SAT : SLOTS_WEEK);
 
-async function runTool(name: string, args: Record<string, any>, cards: Card[], ctx: { leadCode?: string }) {
+async function runTool(name: string, args: Record<string, any>, cards: Card[], ctx: Ctx) {
   switch (name) {
     case 'calcular_ahorro': {
       const bill = Number(args.factura_mensual);
@@ -193,6 +196,9 @@ async function runTool(name: string, args: Record<string, any>, cards: Card[], c
     }
     case 'registrar_cliente': {
       if (ctx.leadCode) return { ya_registrado: true, codigo: ctx.leadCode };
+      // regla dura: solo se registra si el último mensaje del usuario confirma el resumen
+      if (!CONFIRM.test(ctx.lastUser))
+        return { ok: false, error: 'Aún no confirmado. Muestra el resumen de los datos y pregunta "¿Lo registro así?". Registra solo cuando el usuario responda que sí.' };
       const bill = Number(args.factura_mensual) || undefined;
       const est = bill ? estimate(bill) : undefined;
       try {
@@ -252,7 +258,10 @@ export default async function handler(req: Req, res: Res) {
     if (!history.length || history[history.length - 1].role !== 'user') throw new HttpError(400, 'Mensaje vacío');
     if (history.length > MAX_MESSAGES) throw new HttpError(429, 'Esta conversación llegó a su límite. Para seguir, escríbenos por WhatsApp al (939) 232-6136.');
     const session = String(body.session ?? 'anon').slice(0, 64);
-    const ctx: { leadCode?: string } = { leadCode: body.leadCode && /^EH-\d+$/.test(body.leadCode) ? body.leadCode : undefined };
+    const ctx: Ctx = {
+      leadCode: body.leadCode && /^EH-\d+$/.test(body.leadCode) ? body.leadCode : undefined,
+      lastUser: history[history.length - 1].content.slice(0, MAX_CHARS),
+    };
 
     const messages: any[] = [
       { role: 'system', content: systemPrompt() + (ctx.leadCode ? `\n\nEste visitante ya está registrado con el código ${ctx.leadCode}.` : '') },
