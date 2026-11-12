@@ -7,6 +7,7 @@ import { productStore } from '../lib/products';
 import { labelOf } from '../components/Calendar';
 import { ArrowUpRight, Calendar, Check, FileText, Phone, Sun, WhatsApp } from '../components/Icons';
 import { CONTACT, EASINGS } from '../utils/easings';
+import { rpc } from '../lib/ai';
 
 const STEPS = [
   { t: 'Solicitud recibida', d: 'Recibimos tu factura y tus datos.' },
@@ -24,16 +25,27 @@ export default function Portal() {
   const [contact, setContact] = useState('');
   const [err, setErr] = useState('');
   const [id, setId] = useState<string | null>(null);
+  const [remote, setRemote] = useState<Lead | null>(null);
+  const [searching, setSearching] = useState(false);
   const leads = crm.use();
-  const lead = leads.find((l) => l.id === id) ?? null;
+  const lead = remote ?? leads.find((l) => l.id === id) ?? null;
 
-  const enter = (e: React.FormEvent) => {
+  const enter = async (e: React.FormEvent) => {
     e.preventDefault();
+    setErr('');
     const found = findLead(code, contact);
-    if (found) {
-      setId(found.id);
-      setErr('');
-    } else setErr('No encontramos un proyecto con esos datos. Revisa tu código y tu teléfono o email.');
+    if (found) return setId(found.id);
+    // no está en este navegador: se busca en la base de datos
+    setSearching(true);
+    try {
+      const r = await rpc<RemoteProject | null>('get_project', { p_code: code, p_contact: contact });
+      if (r) setRemote(fromRemote(r));
+      else setErr('No encontramos un proyecto con esos datos. Revisa tu código y tu teléfono o email.');
+    } catch {
+      setErr('No pudimos consultar tu proyecto. Intenta de nuevo.');
+    } finally {
+      setSearching(false);
+    }
   };
 
   return (
@@ -44,7 +56,13 @@ export default function Portal() {
         </a>
         <span>Mi proyecto</span>
         {lead && (
-          <button className="btn btn--text btn--sm portal__out" onClick={() => setId(null)}>
+          <button
+            className="btn btn--text btn--sm portal__out"
+            onClick={() => {
+              setId(null);
+              setRemote(null);
+            }}
+          >
             Salir
           </button>
         )}
@@ -69,8 +87,8 @@ export default function Portal() {
               <span>Celular o email</span>
             </label>
             {err && <p className="err">{err}</p>}
-            <button className="btn btn--yellow btn--block" type="submit" disabled={!code || !contact}>
-              Ver mi proyecto <ArrowUpRight size={18} />
+            <button className="btn btn--yellow btn--block" type="submit" disabled={!code || !contact || searching}>
+              {searching ? 'Buscando…' : 'Ver mi proyecto'} <ArrowUpRight size={18} />
             </button>
             <small className="portal__hint">Demo: prueba con <b>EH-1035</b> y <b>787-555-0114</b>, o con el código que generes en la cotización del sitio.</small>
           </motion.form>
@@ -80,6 +98,44 @@ export default function Portal() {
       </AnimatePresence>
     </div>
   );
+}
+
+interface RemoteProject {
+  code: string;
+  name: string;
+  property: Lead['property'];
+  stage: Lead['stage'];
+  town: string;
+  bill: number | null;
+  kwh: number | null;
+  estimate: Lead['estimate'] | null;
+  interests: string[];
+  has_file: boolean;
+  created_at: string;
+  appointment: { date: string; time: string } | null;
+}
+
+function fromRemote(r: RemoteProject): Lead {
+  return {
+    id: r.code,
+    code: r.code,
+    createdAt: r.created_at,
+    updatedAt: r.created_at,
+    name: r.name,
+    phone: '',
+    email: '',
+    town: r.town,
+    property: r.property ?? 'Residencial',
+    bill: r.bill ?? undefined,
+    kwh: r.kwh ?? undefined,
+    file: r.has_file ? { id: '', name: 'Factura recibida', type: '', size: 0 } : undefined,
+    interests: r.interests ?? [],
+    appointment: r.appointment ? { ...r.appointment, mode: 'Visita técnica' } : undefined,
+    source: 'Cotización web',
+    stage: r.stage ?? 'nuevo',
+    estimate: r.estimate ?? undefined,
+    notes: [],
+  };
 }
 
 function ProjectView({ lead }: { lead: Lead }) {

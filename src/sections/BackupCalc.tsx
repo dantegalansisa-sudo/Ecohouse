@@ -3,27 +3,12 @@ import { AnimatePresence, motion } from 'framer-motion';
 import RevealText from '../components/RevealText';
 import { ArrowUpRight, Check, Minus, Plus } from '../components/Icons';
 import { productStore } from '../lib/products';
+import { APPLIANCES, recommendBackup } from '../../api/_lib/solar.js';
 import { quoteList } from '../lib/quoteList';
 import { createStore } from '../lib/createStore';
 import { EASINGS } from '../utils/easings';
 import { scrollToId } from '../utils/scroll';
 import { ProductImage } from './Store';
-
-// consumo típico por equipo: vatios en uso y horas de uso por día
-const APPLIANCES = [
-  { id: 'nevera', label: 'Nevera', emoji: '🧊', w: 150, h: 10, def: 1 },
-  { id: 'abanico', label: 'Abanico', emoji: '🌀', w: 60, h: 8, def: 2 },
-  { id: 'luces', label: 'Luces LED (5)', emoji: '💡', w: 50, h: 6, def: 1 },
-  { id: 'router', label: 'Internet / Router', emoji: '📶', w: 15, h: 24, def: 1 },
-  { id: 'tv', label: 'Televisor', emoji: '📺', w: 100, h: 5, def: 1 },
-  { id: 'cel', label: 'Celulares y laptop', emoji: '💻', w: 60, h: 4, def: 1 },
-  { id: 'bomba', label: 'Bomba de agua', emoji: '🚿', w: 750, h: 1, def: 0 },
-  { id: 'ac', label: 'Aire acond. 12k BTU', emoji: '❄️', w: 1100, h: 8, def: 0 },
-  { id: 'lavadora', label: 'Lavadora', emoji: '🧺', w: 500, h: 1, def: 0 },
-  { id: 'micro', label: 'Microondas', emoji: '🍲', w: 1200, h: 0.3, def: 0 },
-  { id: 'cpap', label: 'Equipo médico (CPAP)', emoji: '🩺', w: 60, h: 8, def: 0 },
-  { id: 'cafe', label: 'Cafetera', emoji: '☕', w: 900, h: 0.25, def: 0 },
-];
 
 const HOURS = [8, 12, 24, 48, 72];
 
@@ -35,29 +20,8 @@ export default function BackupCalc() {
   const [qty, setQty] = useState<Record<string, number>>(() => Object.fromEntries(APPLIANCES.map((a) => [a.id, a.def])));
   const [hours, setHours] = useState(24);
 
-  const { kwh, peak } = useMemo(() => {
-    let daily = 0;
-    let peakW = 0;
-    APPLIANCES.forEach((a) => {
-      daily += ((a.w * a.h) / 1000) * qty[a.id];
-      peakW += a.w * qty[a.id];
-    });
-    return { kwh: Math.round(daily * (hours / 24) * 10) / 10, peak: Math.round(peakW) };
-  }, [qty, hours]);
-
-  const options = useMemo(
-    () =>
-      products
-        .filter((p) => p.visible && p.capacityKwh)
-        .map((p) => {
-          const units = Math.max(1, Math.ceil(kwh / (p.capacityKwh! * 0.9)));
-          const powerOk = !p.outputW || p.outputW >= peak;
-          return { p, units, total: Math.round(units * p.capacityKwh! * 10) / 10, powerOk };
-        })
-        .sort((a, b) => Number(b.powerOk) - Number(a.powerOk) || a.units - b.units)
-        .slice(0, 3),
-    [products, kwh, peak]
-  );
+  const { kwh, peak, options: recs } = useMemo(() => recommendBackup(qty, hours, products), [qty, hours, products]);
+  const options = recs.map((r) => ({ ...r, p: products.find((x) => x.id === r.id)! }));
 
   const level = Math.min(1, kwh / 30);
   const set = (id: string, d: number) => setQty((q) => ({ ...q, [id]: Math.max(0, Math.min(9, q[id] + d)) }));

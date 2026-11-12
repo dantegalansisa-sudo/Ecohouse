@@ -72,7 +72,6 @@ export default function Footer() {
             <div>
               <small>Clientes</small>
               <a href="#/portal">Mi proyecto</a>
-              <a href="#/admin">Panel Eco House</a>
               {(Object.keys(LEGAL) as (keyof typeof LEGAL)[]).map((k) => (
                 <button key={k} className="footer__link" onClick={() => setLegal(k)}>
                   {k}

@@ -4,6 +4,7 @@ import 'lenis/dist/lenis.css';
 import './index.css';
 import './eco.css';
 import './admin.css';
+import './sol.css';
 import App from './App';
 
 createRoot(document.getElementById('root')!).render(

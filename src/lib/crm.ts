@@ -12,7 +12,7 @@ export const STAGES = [
 ] as const;
 
 export type Stage = (typeof STAGES)[number]['id'];
-export type Source = 'Cotización web' | 'Contacto' | 'Calculadora de respaldo' | 'Tienda' | 'Agenda';
+export type Source = 'Cotización web' | 'Contacto' | 'Calculadora de respaldo' | 'Tienda' | 'Agenda' | 'Chat IA';
 
 export interface Note {
   at: string;
@@ -100,14 +100,14 @@ function seed(): Lead[] {
 
 export const crm = createStore<Lead[]>('eh-crm-v1', seed());
 
-export function addLead(data: Omit<Lead, 'id' | 'code' | 'createdAt' | 'updatedAt' | 'stage' | 'notes'>): Lead {
+export function addLead(data: Omit<Lead, 'id' | 'code' | 'createdAt' | 'updatedAt' | 'stage' | 'notes'>, code?: string): Lead {
   const all = crm.get();
   const max = all.reduce((m, l) => Math.max(m, +l.code.split('-')[1] || 0), 1030);
   const now = new Date().toISOString();
   const lead: Lead = {
     ...data,
     id: uid(),
-    code: `EH-${max + 1}`,
+    code: code ?? `EH-${max + 1}`,
     createdAt: now,
     updatedAt: now,
     stage: 'nuevo',

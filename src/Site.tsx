@@ -16,6 +16,7 @@ import Quote from './sections/Quote';
 import Testimonials from './sections/Testimonials';
 import Contact from './sections/Contact';
 import Footer from './sections/Footer';
+import SolChat from './components/SolChat';
 import { useIsMobile } from './hooks/useMediaQuery';
 import { setLenis } from './utils/scroll';
 
@@ -81,6 +82,7 @@ export default function Site() {
         <Contact />
         <Footer />
       </main>
+      <SolChat ready={ready} />
     </>
   );
 }

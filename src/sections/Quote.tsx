@@ -11,6 +11,8 @@ import { saveFile } from '../lib/files';
 import { productStore } from '../lib/products';
 import { quoteList } from '../lib/quoteList';
 import { backupNeeds } from './BackupCalc';
+import { readBill, rpc, uploadBill, type BillAI } from '../lib/ai';
+import { Sun } from '../components/Icons';
 
 const STEP_NAMES = ['Propiedad', 'Factura', 'Datos', 'Visita', 'Listo'];
 const MAX_MB = 10;
@@ -37,6 +39,9 @@ export default function Quote() {
   const [time, setTime] = useState('');
   const [sending, setSending] = useState(false);
   const [lead, setLead] = useState<Lead | null>(null);
+  const [ai, setAi] = useState<BillAI | null>(null);
+  const [aiState, setAiState] = useState<'idle' | 'reading' | 'error'>('idle');
+  const [aiErr, setAiErr] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
 
   const preview = useMemo(() => (file && file.type.startsWith('image/') ? URL.createObjectURL(file) : ''), [file]);
@@ -59,6 +64,30 @@ export default function Quote() {
     if (f.size > MAX_MB * 1024 * 1024) return setFileErr(`El archivo supera ${MAX_MB} MB.`);
     setFileErr('');
     setFile(f);
+    analyze(f);
+  };
+
+  // Sol lee la factura: total, consumo y el historial de 12 meses de la gráfica
+  const analyze = async (f: File) => {
+    setAi(null);
+    setAiErr('');
+    setAiState('reading');
+    try {
+      const r = await readBill(f);
+      if (!r.es_factura) {
+        setAiState('error');
+        setAiErr('No parece una factura de luz. Revisa el archivo o escribe los datos abajo.');
+        return;
+      }
+      setAi(r);
+      setAiState('idle');
+      if (r.total_a_pagar) setBill(String(Math.round(r.total_a_pagar * 100) / 100));
+      const k = r.promedio_kwh ?? r.consumo_kwh;
+      if (k) setKwh(String(k));
+    } catch (e) {
+      setAiState('error');
+      setAiErr(e instanceof Error ? e.message : 'No pudimos leerla automáticamente.');
+    }
   };
 
   const locate = () => {
@@ -86,6 +115,35 @@ export default function Quote() {
         stored = undefined;
       }
     }
+    let remoteCode: string | undefined;
+    try {
+      const path = file ? await uploadBill(file).catch(() => undefined) : undefined;
+      const r = await rpc<{ code: string }>('create_lead', {
+        p: {
+          source: 'Cotización web',
+          name: form.name.trim(),
+          phone: form.phone,
+          email: form.email.trim(),
+          town: form.town,
+          address: form.address,
+          lat: coords?.lat ?? '',
+          lng: coords?.lng ?? '',
+          property,
+          bill: +bill || '',
+          kwh: +kwh || '',
+          bill_ai: ai,
+          bill_path: path,
+          interests: list,
+          message: needs,
+          estimate: est,
+          appointment_date: date,
+          appointment_time: date ? time : '',
+        },
+      });
+      remoteCode = r.code;
+    } catch {
+      /* sin conexión a la base: queda guardado localmente */
+    }
     const created = addLead({
       name: form.name.trim(),
       phone: form.phone,
@@ -102,7 +160,7 @@ export default function Quote() {
       appointment: date && time ? { date, time, mode: 'Visita técnica' } : undefined,
       source: 'Cotización web',
       estimate: est ?? undefined,
-    });
+    }, remoteCode);
     quoteList.set([]);
     backupNeeds.set('');
     setLead(created);
@@ -233,19 +291,38 @@ export default function Quote() {
                         <small>PDF, JPG o PNG · máx. {MAX_MB} MB · también puedes tomarle una foto</small>
                       </div>
                     ) : (
-                      <motion.div className="filecard" initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}>
+                      <motion.div className={`filecard ${aiState === 'reading' ? 'scan' : ''}`} initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}>
                         {preview ? <img src={preview} alt="Vista previa de la factura" /> : <span className="filecard__pdf"><FileText size={28} /></span>}
                         <div>
                           <strong>{file.name}</strong>
-                          <small>{(file.size / 1024 / 1024).toFixed(2)} MB · lista para enviar</small>
+                          <small>{aiState === 'reading' ? 'Sol está leyendo tu factura…' : `${(file.size / 1024 / 1024).toFixed(2)} MB · lista para enviar`}</small>
                         </div>
-                        <button type="button" onClick={() => setFile(null)} aria-label="Quitar archivo">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setFile(null);
+                            setAi(null);
+                            setAiState('idle');
+                          }}
+                          aria-label="Quitar archivo"
+                        >
                           <X size={18} />
                         </button>
                       </motion.div>
                     )}
                     <input ref={inputRef} type="file" accept=".pdf,image/*" capture={undefined} hidden onChange={(e) => pick(e.target.files?.[0])} />
                     {fileErr && <p className="err">{fileErr}</p>}
+                    {aiState === 'error' && (
+                      <p className="err">
+                        {aiErr}{' '}
+                        {file && (
+                          <button type="button" className="helpbtn" onClick={() => analyze(file)}>
+                            Reintentar
+                          </button>
+                        )}
+                      </p>
+                    )}
+                    <AnimatePresence>{ai && <AiBill ai={ai} />}</AnimatePresence>
 
                     <div className="fields__row bill-row">
                       <Field label="Total de tu factura ($/mes)" type="number" value={bill} onChange={setBill} />
@@ -441,5 +518,44 @@ export function Field({
       <input type={type} value={value} onChange={(e) => onChange(e.target.value)} autoComplete={autoComplete} placeholder=" " list={list} min={type === 'number' ? 0 : undefined} />
       <span>{label}</span>
     </label>
+  );
+}
+
+function AiBill({ ai }: { ai: BillAI }) {
+  const max = Math.max(1, ...ai.historial.map((h) => h.kwh));
+  return (
+    <motion.div className="aibill" initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
+      <div className="aibill__head">
+        <Sun size={16} /> Factura leída por IA
+        <em>Confianza {ai.confianza}</em>
+      </div>
+      <div className="aibill__grid">
+        <div>
+          <b>{ai.total_a_pagar != null ? `$${ai.total_a_pagar}` : '—'}</b>
+          <small>total del mes</small>
+        </div>
+        <div>
+          <b>{ai.consumo_kwh != null ? `${ai.consumo_kwh} kWh` : '—'}</b>
+          <small>consumo del mes</small>
+        </div>
+        <div>
+          <b>{ai.promedio_kwh != null ? `${ai.promedio_kwh} kWh` : '—'}</b>
+          <small>{ai.historial.length > 1 ? `promedio ${ai.historial.length} meses` : 'para tu estimado'}</small>
+        </div>
+      </div>
+      {ai.historial.length > 1 && (
+        <div className="aibill__chart" aria-label="Historial de consumo">
+          {ai.historial.map((h, i) => (
+            <div key={i} title={`${h.mes}: ${h.kwh} kWh`}>
+              <motion.span initial={{ height: 0 }} animate={{ height: `${(h.kwh / max) * 100}%` }} transition={{ delay: i * 0.04 }} />
+              <small>{h.mes.slice(0, 3)}</small>
+            </div>
+          ))}
+        </div>
+      )}
+      <p>
+        {ai.nota} {ai.historial.length > 1 && 'Usamos tu promedio anual para dimensionar el sistema, no un solo mes.'}
+      </p>
+    </motion.div>
   );
 }

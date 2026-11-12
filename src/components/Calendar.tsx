@@ -2,11 +2,10 @@ import { useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Calendar as CalIcon, ChevronLeft, ChevronRight, Clock } from './Icons';
 import { crm } from '../lib/crm';
+import { SLOTS_SAT as SAT, SLOTS_WEEK as WEEK } from '../../api/_lib/solar.js';
 
 const MONTHS = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
 const DAYS = ['D', 'L', 'M', 'M', 'J', 'V', 'S'];
-const WEEK = ['8:00 AM', '9:30 AM', '11:00 AM', '1:00 PM', '2:30 PM', '4:00 PM'];
-const SAT = ['9:00 AM', '10:30 AM', '12:00 PM'];
 
 export const keyOf = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 

@@ -6,3 +6,7 @@ dist
 
 _source
 *.tsbuildinfo
+.env
+.env.*
+!.env.example
+.vercel
